@@ -1,0 +1,4 @@
+
+import(forecast,parallel,miscTools)
+
+export(mapa,mapasimple,mapaest,mapacalc,mapafor)
