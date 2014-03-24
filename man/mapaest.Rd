@@ -6,7 +6,7 @@ The following function estimates MAPA and saves all fitted model.
 }
 \usage{
 mapaest(insample, ppy, minimumAL = 1, maximumAL = ppy, paral = 0, 
-	display = 0, outplot = 1)
+	display = 0, outplot = 1, model = "ZZZ")
 }
 \arguments{
   \item{insample}{
@@ -31,6 +31,9 @@ mapaest(insample, ppy, minimumAL = 1, maximumAL = ppy, paral = 0,
 }
   \item{outplot}{
     Provide output plot. 0 = no; 1 = yes. Default is 1.
+}
+  \item{model}{
+    Allow only that type of ETS at each aggregation level. This follows similar coding to the ets function. The first letter refers to the error type ("A", "M" or "Z"); the second letter refers to the trend type ("N","A","Ad","M","Md" or "Z"); and the third letter refers to the season type ("N","A","M" or "Z"). The letters mean: "N"=none, "A"=additive, "M"=multiplicative and "Z"=automatically selected. A "d" for trend implies damped. By default model="ZZZ". If due to sample limitation ETS cannot be calculated at an aggregation level for the selected model, then no estimation is done for that specific level. 
 }
 }
 \value{

@@ -4,7 +4,7 @@
 # components across multiple frequencies. 
 # International Journal of Forecasting, 30 (2), 291-302
 #
-# Fotios Petropoulos & Nikolaos Kourentzes (2014)
+# Nikolaos Kourentzes & Fotios Petropoulos (2014)
 
 library(forecast, quietly=TRUE)   # ETS method
 library(miscTools, quietly=TRUE)  # Needed for medians by columns
@@ -12,7 +12,7 @@ library(parallel, quietly=TRUE)   # Needed for parallel
 
 #-------------------------------------------------
 mapa <- function(insample, ppy=NULL, fh=ppy, ifh=1, minimumAL=1, maximumAL=ppy, 
-	comb="mean", paral=0, display=0, outplot=1, hybrid=TRUE)
+	comb="mean", paral=0, display=0, outplot=1, hybrid=TRUE, model="ZZZ")
 {
 # Wrapper to estimate and produce MAPA in- and out-of-sample forecasts
 # Uses mapaest and mapafor
@@ -37,6 +37,15 @@ mapa <- function(insample, ppy=NULL, fh=ppy, ifh=1, minimumAL=1, maximumAL=ppy,
 #   outplot     = Provide output plot. 0 = no; 1 = yes. Default is 1.
 #   hybrid      = Provide hybrid forecasts, as in Kourentzes et al. paper. Default is TRUE
 #                 If minimumAL > 1 then the minimumAL ETS forecasts are used.  
+#   model       = Allow only that type of ETS at each aggregation level. This follows similar
+#                 coding to the ets function. The first letter refers to the error 
+#                 type ("A", "M" or "Z"); the second letter refers to the trend 
+#                 type ("N","A","Ad","M","Md" or "Z"); and the third letter 
+#                 refers to the season type ("N","A","M" or "Z"). The letters mean: 
+#                 "N"=none, "A"=additive, "M"=multiplicative and "Z"=automatically selected. 
+#                 A "d" for trend implies damped. By default model="ZZZ". If due to sample
+#                 limitation ETS cannot be calculated at an aggregation level for the selected
+#                 model, then no estimation is done for that specific level. 
 #
 # Output:
 #   out$infor   = In-sample forecasts
@@ -68,7 +77,7 @@ mapa <- function(insample, ppy=NULL, fh=ppy, ifh=1, minimumAL=1, maximumAL=ppy,
   }
   
   # Estimate MAPA
-  mapafit <- mapaest(insample, ppy, minimumAL, maximumAL, paral, display)
+  mapafit <- mapaest(insample, ppy, minimumAL, maximumAL, paral, display, model)
   # Produce in- and out-of-sample forecasts
   out <- mapafor(insample, mapafit, fh, ifh, comb, outplot, hybrid)
       
@@ -76,7 +85,7 @@ mapa <- function(insample, ppy=NULL, fh=ppy, ifh=1, minimumAL=1, maximumAL=ppy,
 
 #-------------------------------------------------
 mapasimple <- function(insample, ppy=NULL, fh=ppy, minimumAL=1, maximumAL=ppy, comb="mean", 
-	output="forecast", paral=0, display=0, outplot=1, hybrid=TRUE) 
+	output="forecast", paral=0, display=0, outplot=1, hybrid=TRUE, model="ZZZ") 
 {
 # MAPA estimation and forecast
 # 
@@ -103,6 +112,15 @@ mapasimple <- function(insample, ppy=NULL, fh=ppy, minimumAL=1, maximumAL=ppy, c
 #                 2 = time series, forecasts and components. Default is 1. 
 #   hybrid      = Provide hybrid forecasts, as in Kourentzes et al. paper. Default is TRUE  
 #                 If minimumAL > 1 then the minimumAL ETS forecasts are used.  
+#   model       = Allow only that type of ETS at each aggregation level. This follows similar
+#                 coding to the ets function. The first letter refers to the error 
+#                 type ("A", "M" or "Z"); the second letter refers to the trend 
+#                 type ("N","A","Ad","M","Md" or "Z"); and the third letter 
+#                 refers to the season type ("N","A","M" or "Z"). The letters mean: 
+#                 "N"=none, "A"=additive, "M"=multiplicative and "Z"=automatically selected. 
+#                 A "d" for trend implies damped. By default model="ZZZ". If due to sample
+#                 limitation ETS cannot be calculated at an aggregation level for the selected
+#                 model, then no estimation is done for that specific level. 
 #
 # Output:
 #   forecasts   = Vector with forecasts
@@ -155,12 +173,12 @@ mapasimple <- function(insample, ppy=NULL, fh=ppy, minimumAL=1, maximumAL=ppy, c
   if (paral != 0){  # Parallel run
     FCs_par <- clusterApplyLB(cl, 1:(maximumAL-minimumAL+1), mapasimple.loop, 
       insample=insample, minimumAL=minimumAL, maximumAL=maximumAL, 
-      observations=observations, ppy=ppy, display=display, fh=fh)  
+      observations=observations, ppy=ppy, display=display, fh=fh, model=model)  
   } else {          # Serial run
     FCs_par <- vector("list", (maximumAL-minimumAL+1))
     for (i in minimumAL:maximumAL){
       FCs_par[[i]] <- mapasimple.loop(i, insample, minimumAL, maximumAL, observations, 
-        ppy, display, fh)
+        ppy, display, fh, model)
     }
   }
   
@@ -178,6 +196,12 @@ mapasimple <- function(insample, ppy=NULL, fh=ppy, minimumAL=1, maximumAL=ppy, c
   for (f in 1:fh){  
     FCs[, , f] <- t(array(FCs_par[,f],c(4,(maximumAL-minimumAL+1))))
   }
+  
+  # Check whether all aggregation levels were calculated for given model
+  # due to sample size
+  AL.idx <- is.na(FCs[,1,1])
+  FCs <- FCs[!AL.idx, , ]
+  maximumAL <- maximumAL - sum(AL.idx)
   
   # MAPA combination
   combres <- mapacomb(minimumAL,maximumAL,ppy,FCs,comb,observations)
@@ -316,7 +340,8 @@ mapafor <- function(insample, mapafit, fh=-1, ifh=1, comb="mean", outplot=1, hyb
 }
 
 #-------------------------------------------------
-mapaest <- function(insample, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=0, display=0, outplot=1) {
+mapaest <- function(insample, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=0, display=0, 
+                    outplot=1, model="ZZZ") {
 # Estimate MAPA for a time series  
 # 
 # mapaest(insample, ppy, minimumAL=1, maximumAL=ppy, paral=0, display=0) 
@@ -331,7 +356,16 @@ mapaest <- function(insample, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=0, dis
 #   paral       = Use parallel processing. 0 = no; 1 = yes (requires initialised cluster); 
 #                 2 = yes and initialise cluster. Default is 0.
 #   display     = Display calculation progress in console. 0 = no; 1 = yes. Default is 0.
-#   outplot     = Provide output plot. 0 = no; 1 = yes. Default is 1.   
+#   outplot     = Provide output plot. 0 = no; 1 = yes. Default is 1.  
+#   model       = Allow only that type of ETS at each aggregation level. This follows similar
+#                 coding to the ets function. The first letter refers to the error 
+#                 type ("A", "M" or "Z"); the second letter refers to the trend 
+#                 type ("N","A","Ad","M","Md" or "Z"); and the third letter 
+#                 refers to the season type ("N","A","M" or "Z"). The letters mean: 
+#                 "N"=none, "A"=additive, "M"=multiplicative and "Z"=automatically selected. 
+#                 A "d" for trend implies damped. By default model="ZZZ". If due to sample
+#                 limitation ETS cannot be calculated at an aggregation level for the selected
+#                 model, then no estimation is done for that specific level. 
 #
 # Output:
 #   mapafit     = Estimated MAPA model structure
@@ -370,12 +404,12 @@ mapaest <- function(insample, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=0, dis
   if (paral != 0){  # Parallel run
     mapafit <- clusterApplyLB(cl, 1:(maximumAL-minimumAL+1), mapaest.loop, 
       insample=insample, minimumAL=minimumAL, maximumAL=maximumAL, observations=observations, ppy=ppy,
-      display=display)  
+      display=display,model=model)  
   } else {          # Serial run
     mapafit <- vector("list", (maximumAL-minimumAL+1))
     for (i in 1:(maximumAL-minimumAL+1)){
       mapafit[[i]] <- mapaest.loop(i, insample, minimumAL, maximumAL, observations, 
-        ppy, display)
+        ppy, display,model=model)
     }
   }
     
@@ -812,8 +846,21 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
 }
 
 #-------------------------------------------------
-mapasimple.loop <- function(ALi, insample, minimumAL, maximumAL, observations, ppy, display,fh){
+mapasimple.loop <- function(ALi, insample, minimumAL, maximumAL, observations, 
+                            ppy, display, fh, model){
   # Internal function for mapasimple estimation and forecast iterations
+  
+  # Create ETS model strings
+  mn <- nchar(model)
+  model <- substring(model, seq(1,mn,1), seq(1,mn,1))
+  ets.model <- paste(model[1],model[2],model[mn],sep="")
+  if (model[2]=="Z"){
+    ets.damped <- NULL
+  } else if (mn==4){
+    ets.damped <- TRUE
+  } else {
+    ets.damped <- FALSE
+  }
   
   ALvec <- minimumAL:maximumAL
   AL <- ALvec[ALi]
@@ -825,7 +872,7 @@ mapasimple.loop <- function(ALi, insample, minimumAL, maximumAL, observations, p
     cat(txtc)
   }
   
-  FCs_temp <- array(0, c(4, fh))
+  FCs_temp <- array(NA, c(4, fh))
   
   q <- observations %/% AL # observation in the aggregated level
   r <- observations %% AL  # observation to discard from the beginning of the series
@@ -835,17 +882,28 @@ mapasimple.loop <- function(ALi, insample, minimumAL, maximumAL, observations, p
     ppyA <- 1
   }
   
+  # Check if selected ETS model is possible for current AL
+  npars <- 2
+  if (model[2] == "A" | model[2] == "M"){
+    npars <- npars + 2}
+  if (model[mn] == "A" | model[mn] == "M"){
+    npars <- npars + ppyA}
+  if (!is.null(ets.damped)){ 
+    npars <- npars + as.numeric(ets.damped)}
+  if (q <= npars + 1){
+    q <- 1} # This will not estimate current AL
+  
   if (q >= 4){
     # Aggregation
     insampleA <- array(0, dim=c(q)) # in-sample aggregated values will be saved here
-    for (j in 1:q){                # calculate the aggregate values
+    for (j in 1:q){                 # calculate the aggregate values
       insampleA[j] <- mean(insample[(r+1+(j-1)*AL):(r+j*AL)])
     }
     
     ats <- ts(insampleA, frequency = ppyA) # create the time series
     
     # Fit ETS
-    ats.fit <- ets(ats)
+    ats.fit <- ets(ats,model=ets.model,damped=ets.damped)
     ats.fcast <- forecast.ets(ats.fit,h=fhA)
     
     # Translate ets states for MAPA
@@ -869,8 +927,21 @@ mapasimple.loop <- function(ALi, insample, minimumAL, maximumAL, observations, p
 }
 
 #-------------------------------------------------
-mapaest.loop <- function(ALi, insample, minimumAL, maximumAL, observations, ppy, display){ 
+mapaest.loop <- function(ALi, insample, minimumAL, maximumAL, observations, 
+                         ppy, display, model){ 
   # Internal function for running a single loop in mapaest
+  
+  # Create ETS model strings
+  mn <- nchar(model)
+  model <- substring(model, seq(1,mn,1), seq(1,mn,1))
+  ets.model <- paste(model[1],model[2],model[mn],sep="")
+  if (model[2]=="Z"){
+    ets.damped <- NULL
+  } else if (mn==4){
+    ets.damped <- TRUE
+  } else {
+    ets.damped <- FALSE
+  }
   
   ALvec <- minimumAL:maximumAL
   AL <- ALvec[ALi]
@@ -889,6 +960,17 @@ mapaest.loop <- function(ALi, insample, minimumAL, maximumAL, observations, ppy,
     ppyA <- 1
   }
   
+  # Check if selected ETS model is possible for current AL
+  npars <- 2
+  if (model[2] == "A" | model[2] == "M"){
+    npars <- npars + 2}
+  if (model[mn] == "A" | model[mn] == "M"){
+    npars <- npars + ppyA}
+  if (!is.null(ets.damped)){ 
+    npars <- npars + as.numeric(ets.damped)}
+  if (q <= npars + 1){
+    q <- 1} # This will not estimate current AL
+  
   if (q >= 4){
     # Aggregation
     insampleA <- array(0, dim=c(q)) # in-sample aggregated values will be saved here
@@ -899,7 +981,7 @@ mapaest.loop <- function(ALi, insample, minimumAL, maximumAL, observations, ppy,
     ats <- ts(insampleA, frequency = ppyA) # create the time series
     
     # Fit ETS
-    fit <- ets(ats)
+    fit <- ets(ats,model=ets.model,damped=ets.damped)
     fit$use <- TRUE
   } else {
     fit <- list("loglik"=NULL,"aic"=NULL,"bic"=NULL,"aicc"=NULL,"mse"=NULL,

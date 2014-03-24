@@ -8,7 +8,7 @@ Uses mapaest and mapafor.}
 
 \usage{
 mapa(insample, ppy, fh = ppy, ifh = 1, minimumAL = 1, maximumAL = ppy, 
-	comb = "mean", paral = 0, display = 0, outplot = 1, hybrid = TRUE)
+	comb = "mean", paral = 0, display = 0, outplot = 1, hybrid = TRUE, model = "ZZZ")
 }
 
 \arguments{
@@ -45,6 +45,9 @@ mapa(insample, ppy, fh = ppy, ifh = 1, minimumAL = 1, maximumAL = ppy,
 }
   \item{hybrid}{
     Provide hybrid forecasts, as in Kourentzes et al. paper. If minimumAL > 1 then the minimumAL ETS forecasts are used. Default is TRUE.
+}
+  \item{model}{
+    Allow only that type of ETS at each aggregation level. This follows similar coding to the ets function. The first letter refers to the error type ("A", "M" or "Z"); the second letter refers to the trend type ("N","A","Ad","M","Md" or "Z"); and the third letter refers to the season type ("N","A","M" or "Z"). The letters mean: "N"=none, "A"=additive, "M"=multiplicative and "Z"=automatically selected. A "d" for trend implies damped. By default model="ZZZ". If due to sample limitation ETS cannot be calculated at an aggregation level for the selected model, then no estimation is done for that specific level. 
 }
 }
 \value{
