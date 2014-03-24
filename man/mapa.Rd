@@ -44,7 +44,7 @@ mapa(insample, ppy, fh = ppy, ifh = 1, minimumAL = 1, maximumAL = ppy,
     Provide output plot. 0 = no; 1 = yes. Default is 1.
 }
   \item{hybrid}{
-    Provide hybrid forecasts, as in Kourentzes et al. paper. Default is TRUE.
+    Provide hybrid forecasts, as in Kourentzes et al. paper. If minimumAL > 1 then the minimumAL ETS forecasts are used. Default is TRUE.
 }
 }
 \value{
@@ -60,6 +60,9 @@ series structural components across multiple frequencies, International Journal 
 }
 \author{
 Nikolaos Kourentzes and Fotios Petropoulos
+}
+\seealso{
+\code{\link{mapaest}}, \code{\link{mapafor}}, \code{\link{mapasimple}}.
 }
 \examples{
 out <- mapa(admissions)

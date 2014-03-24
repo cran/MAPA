@@ -44,6 +44,9 @@ series structural components across multiple frequencies, International Journal 
 \author{
 Nikolaos Kourentzes and Fotios Petropoulos
 }
+\seealso{
+\code{\link{mapa}}, \code{\link{mapafor}}.
+}
 \examples{
 mapafit <- mapaest(admissions)
 }

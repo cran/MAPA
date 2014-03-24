@@ -28,7 +28,7 @@ mapafor(insample, mapafit, fh = -1, ifh = 1, comb = "mean", outplot = 1, hybrid 
     Provide output plot. 0 = no; 1 = yes. Default is 1. 
 }
   \item{hybrid}{
-    Provide hybrid forecasts, as in Kourentzes et al. paper. Default is TRUE.
+    Provide hybrid forecasts, as in Kourentzes et al. paper. If minimumAL > 1 then the minimumAL ETS forecasts are used. Default is TRUE.
 }
 }
 \value{
@@ -44,6 +44,9 @@ series structural components across multiple frequencies, International Journal 
 }
 \author{
 Nikolaos Kourentzes and Fotios Petropoulos
+}
+\seealso{
+\code{\link{mapa}}, \code{\link{mapaest}}, \code{\link{mapacalc}}.
 }
 \examples{
 mapafit <- mapaest(admissions,outplot=0)

@@ -36,6 +36,7 @@ mapa <- function(insample, ppy=NULL, fh=ppy, ifh=1, minimumAL=1, maximumAL=ppy,
 #   display     = Display calculation progress in console. 0 = no; 1 = yes. Default is 0.
 #   outplot     = Provide output plot. 0 = no; 1 = yes. Default is 1.
 #   hybrid      = Provide hybrid forecasts, as in Kourentzes et al. paper. Default is TRUE
+#                 If minimumAL > 1 then the minimumAL ETS forecasts are used.  
 #
 # Output:
 #   out$infor   = In-sample forecasts
@@ -53,11 +54,12 @@ mapa <- function(insample, ppy=NULL, fh=ppy, ifh=1, minimumAL=1, maximumAL=ppy,
     return(invisible())
   }
   
-  # Get ppy and fh
+  # Get ppy, fh and maximumAL
   if (is.null(ppy)){
     if (class(insample)=="ts"){
       ppy <- frequency(insample)
       if (is.null(fh)){fh <- ppy}
+	  if (is.null(maximumAL)){maximumAL <- ppy}
     } else {
       stop(paste("Input ppy is not given and insample input not ts class.",
                  "Please provide the periods in a season of the time series",
@@ -100,6 +102,7 @@ mapasimple <- function(insample, ppy=NULL, fh=ppy, minimumAL=1, maximumAL=ppy, c
 #   outplot     = Provide output plot. 0 = no; 1 = time series and forecast only;
 #                 2 = time series, forecasts and components. Default is 1. 
 #   hybrid      = Provide hybrid forecasts, as in Kourentzes et al. paper. Default is TRUE  
+#                 If minimumAL > 1 then the minimumAL ETS forecasts are used.  
 #
 # Output:
 #   forecasts   = Vector with forecasts
@@ -115,11 +118,12 @@ mapasimple <- function(insample, ppy=NULL, fh=ppy, minimumAL=1, maximumAL=ppy, c
     return(invisible())
   }  
   
-  # Get ppy and fh
+  # Get ppy, fh and maximumAL
   if (is.null(ppy)){
     if (class(insample)=="ts"){
       ppy <- frequency(insample)
       if (is.null(fh)){fh <- ppy}
+	  if (is.null(maximumAL)){maximumAL <- ppy}
     } else {
     stop(paste("Input ppy is not given and insample input not ts class.",
                "Please provide the periods in a season of the time series",
@@ -132,6 +136,10 @@ mapasimple <- function(insample, ppy=NULL, fh=ppy, minimumAL=1, maximumAL=ppy, c
     maximumAL <- maximumAL + 1
   }
   
+  if (minimumAL>=maximumAL){
+    stop("maximumAL must be larger than minimumAL")
+  }
+  
   # Setup parallel processing if required
   if (paral == 2){
     crs <- detectCores()
@@ -140,19 +148,18 @@ mapasimple <- function(insample, ppy=NULL, fh=ppy, minimumAL=1, maximumAL=ppy, c
   }
   
   observations <- length(insample) # number of observations for the in-sample data
-  FCs <- array(0, c(maximumAL, 4, fh)) # the forecasts and the forecasts of the components 
+  FCs <- array(0, c((maximumAL-minimumAL+1), 4, fh)) # the forecasts and the forecasts of the components 
 									  # will be saved here
    
   # Aggregation and estimation 
   if (paral != 0){  # Parallel run
     FCs_par <- clusterApplyLB(cl, 1:(maximumAL-minimumAL+1), mapasimple.loop, 
-      insample=insample, maximumAL=maximumAL, observations=observations, ppy=ppy,
-      display=display, fh=fh)  
+      insample=insample, minimumAL=minimumAL, maximumAL=maximumAL, 
+      observations=observations, ppy=ppy, display=display, fh=fh)  
   } else {          # Serial run
     FCs_par <- vector("list", (maximumAL-minimumAL+1))
-    ALvec <- minimumAL:maximumAL
-    for (i in 1:(maximumAL-minimumAL+1)){
-      FCs_par[[i]] <- mapasimple.loop(ALvec[i], insample, maximumAL, observations, 
+    for (i in minimumAL:maximumAL){
+      FCs_par[[i]] <- mapasimple.loop(i, insample, minimumAL, maximumAL, observations, 
         ppy, display, fh)
     }
   }
@@ -165,11 +172,11 @@ mapasimple <- function(insample, ppy=NULL, fh=ppy, minimumAL=1, maximumAL=ppy, c
   # Reshape parallel output
   FCs_par <- do.call(rbind, FCs_par)
   
-  FCs <- array(0, c(maximumAL, 4, fh),dimnames=list(paste("AL",minimumAL:maximumAL,sep=""),
+  FCs <- array(0, c((maximumAL-minimumAL+1), 4, fh),dimnames=list(paste("AL",minimumAL:maximumAL,sep=""),
     c("ETS","Level","Trend","Season"),paste("t+",1:fh,sep=""))) # the forecasts and the forecasts 
 															                              # of the components will be saved here
   for (f in 1:fh){  
-    FCs[, , f] <- t(array(FCs_par[,f],c(4,maximumAL)))
+    FCs[, , f] <- t(array(FCs_par[,f],c(4,(maximumAL-minimumAL+1))))
   }
   
   # MAPA combination
@@ -209,6 +216,7 @@ mapafor <- function(insample, mapafit, fh=-1, ifh=1, comb="mean", outplot=1, hyb
 #   comb        = Combination operator. One of "mean" or "median". Default is "mean"
 #   outplot     = Provide output plot. 0 = no; 1 = yes. Default is 1. 
 #   hybrid      = Provide hybrid forecasts, as in Kourentzes et al. paper. Default is TRUE
+#                 If minimumAL > 1 then the minimumAL ETS forecasts are used.  
 #
 # Output:
 #   out$infor   = In-sample forecasts
@@ -218,7 +226,8 @@ mapafor <- function(insample, mapafit, fh=-1, ifh=1, comb="mean", outplot=1, hyb
   
   observations <- length(insample) # number of observations for the in-sample data
   
-  ppy <- as.numeric(mapafit[1,12])
+  ppy <- as.numeric(mapafit[1,21])
+  
   if (fh == -1){
     fh <- ppy
   }
@@ -226,7 +235,7 @@ mapafor <- function(insample, mapafit, fh=-1, ifh=1, comb="mean", outplot=1, hyb
   # In-sample MAPA
   if (ifh>0){
     infor <- array(NA,c(ifh,observations),dimnames=list(paste("t+",1:ifh,sep="")))
-    for (i in (ppy):(observations-1)){
+    for (i in ppy:(observations-1)){
       inobs <- as.matrix(insample[1:i])
       infor[, i+1] <- mapacalc(inobs, mapafit, fh=ifh, comb, output="forecast", outplot=0, hybrid) 
       # Crop out-of-sample predictions
@@ -289,9 +298,9 @@ mapafor <- function(insample, mapafit, fh=-1, ifh=1, comb="mean", outplot=1, hyb
     MSE <- mean(resid^2, na.rm=TRUE)
     MAE <- mean(abs(resid), na.rm=TRUE)
   } else if (ifh > 1) {
-    MSE <- array(0,c(ifh,1),dimnames=list(paste("t+",1:ifh,sep=""),"MSE"))
-    MAE <- array(0,c(ifh,1),dimnames=list(paste("t+",1:ifh,sep=""),"MAE"))
-    for (h in 1:ifh) {
+    MSE <- array(NA,c(ifh,1),dimnames=list(paste("t+",1:ifh,sep=""),"MSE"))
+    MAE <- array(NA,c(ifh,1),dimnames=list(paste("t+",1:ifh,sep=""),"MAE"))
+    for (h in 1:min(ifh,(observations-ppy))) {
       resid <- insample[h:observations] - infor[h, 1:(observations-h+1)]
       MSE[h] <- mean(resid^2, na.rm=TRUE)
       MAE[h] <- mean(abs(resid), na.rm=TRUE)
@@ -339,9 +348,13 @@ mapaest <- function(insample, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=0, dis
     }
   }  
   
-  # Make sure that maximumAL > 1
+  # Make sure that maximumAL > 1 and larger than minimumAL
   if (maximumAL == 1){
     maximumAL = maximumAL + 1
+  }
+  
+  if (minimumAL>=maximumAL){
+    stop("maximumAL must be larger than minimumAL")
   }
   
   # Setup parallel processing if required
@@ -353,16 +366,15 @@ mapaest <- function(insample, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=0, dis
   
   observations <- length(insample) # number of observations for the in-sample data
   
-  # Aggregation and estimation 
+  # Aggregation and estimation
   if (paral != 0){  # Parallel run
     mapafit <- clusterApplyLB(cl, 1:(maximumAL-minimumAL+1), mapaest.loop, 
-      insample=insample, maximumAL=maximumAL, observations=observations, ppy=ppy,
+      insample=insample, minimumAL=minimumAL, maximumAL=maximumAL, observations=observations, ppy=ppy,
       display=display)  
   } else {          # Serial run
     mapafit <- vector("list", (maximumAL-minimumAL+1))
-    ALvec <- minimumAL:maximumAL
     for (i in 1:(maximumAL-minimumAL+1)){
-      mapafit[[i]] <- mapaest.loop(ALvec[i], insample, maximumAL, observations, 
+      mapafit[[i]] <- mapaest.loop(i, insample, minimumAL, maximumAL, observations, 
         ppy, display)
     }
   }
@@ -373,15 +385,17 @@ mapaest <- function(insample, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=0, dis
   }
 
   # Process output
-  mapafit <- do.call(rbind, mapafit) # Necessary for clusterApplyLB function
+  mapafit <- do.call(rbind, mapafit) # Re-arrange output for clusterApplyLB function
   rownames(mapafit) <- paste("AL",minimumAL:maximumAL,sep="")
 
   # mapafit <- mapafit[, c(20,19,11,12,13,14)]
   
   # Plot model selection summary
+  ALplot <- 1:(maximumAL-minimumAL+1)
+  ALplot <- ALplot[unlist(mapafit[,19])==TRUE]
   if (outplot == 1){
-    comps <- array(0,c(maximumAL,5))
-    for (AL in minimumAL:maximumAL){
+    comps <- array(0,c(max(ALplot),5))
+    for (AL in 1:max(ALplot)){
       components <- mapafit[[AL, 14]]
       # Error term
       if (components[1]=="A"){
@@ -411,8 +425,6 @@ mapaest <- function(insample, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=0, dis
       }
       comps[AL,5] <- mapafit[[AL,20]]
     }
-    # Use only appropriate ones
-    comps <- comps[unlist(mapafit[, 19])==TRUE, ]
     comps[, 2] <- comps[, 2] + 0.5*comps[, 4]
     image(min(comps[,5]):max(comps[,5]), 1:3, comps[,1:3], axes=FALSE, col=rev(heat.colors(5)), 
 		  ylab="Components", xlab="Aggregation Level", main="ETS components")
@@ -420,9 +432,9 @@ mapaest <- function(insample, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=0, dis
     axis(1, at=min(comps[,5]):max(comps[,5]))
     
     for (i in 1:4){
-      for (AL in min(comps[,5]):(max(comps[,5])+1)){
+      for (AL in 1:max(ALplot)){
         if (i==1){
-          lines(c(AL-0.5,AL-0.5),c(0,4),col="black")
+          lines(c(AL-0.5+minimumAL-1,AL-0.5+minimumAL-1),c(0,4),col="black")
         }
         if (i<4 & AL<=max(comps[,5])){
           if (i==2 & comps[AL,4]==TRUE){
@@ -430,15 +442,17 @@ mapaest <- function(insample, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=0, dis
           } else {
             damp <- NULL
           }
-          text(AL,i,paste(mapafit[[AL,14]][i],damp,sep=""))
+          text(AL+minimumAL-1,i,paste(mapafit[[AL,14]][i],damp,sep=""))
         }
       }
       lines(c(min(comps[,5])-0.5,max(comps[,5])+0.5),c(i-0.5,i-0.5),col="black")
     }
+    lines(c(as.numeric(mapafit[max(ALplot),20])+0.5,
+            as.numeric(mapafit[max(ALplot),20])+0.5),c(0,4),col="black")
   }
   
   # Return output
-  mapafit
+  return(mapafit)
   
 }
 
@@ -461,6 +475,7 @@ mapacalc <- function(insample, mapafit, fh=0, comb="mean", output="forecast",
 #   outplot     = Provide output plot. 0 = no; 1 = time series and forecast only;
 #                 2 = time series, forecasts and components. Default is 1. 
 #   hybrid      = Provide hybrid forecasts, as in Kourentzes et al. paper. Default is TRUE
+#                 If minimumAL > 1 then the minimumAL ETS forecasts are used.
 #
 # Output:
 #   forecasts   = Vector with forecasts
@@ -470,19 +485,25 @@ mapacalc <- function(insample, mapafit, fh=0, comb="mean", output="forecast",
   ALs <- as.numeric(mapafit[mapafit[,19]==TRUE, 20])
   minimumAL <- min(ALs)
   maximumAL <- max(ALs)
-  ppy <- as.numeric(mapafit[1,12])
-  if (fh==0){
-    fh <- ppy
-  } 
+  ppy <- as.numeric(mapafit[1,21])
   
+  # Set default foreast horizon
+  if (fh == 0){
+    fh <- ppy
+  }
+    
   observations <- length(insample) # number of observations for the in-sample data
   
-  FCs <- array(0, c(maximumAL, 4, fh),dimnames=list(paste("AL",minimumAL:maximumAL,sep=""),
+  FCs <- array(0, c(maximumAL-minimumAL+1, 4, fh),dimnames=list(paste("AL",minimumAL:maximumAL,sep=""),
 	c("ETS","Level","Trend","Season"),paste("t+",1:fh,sep=""))) # the forecasted components 
 																# are saved here
   
   # MAPA forecast
-  for (AL in minimumAL:maximumAL){
+  ALvec <- minimumAL:maximumAL
+  
+  for (ALi in 1:(maximumAL-minimumAL+1)){
+    
+    AL <- ALvec[ALi]
     
     q <- observations %/% AL # observation in the aggregated level
     r <- observations %% AL  # observation to discard from the beginning of the series
@@ -541,7 +562,7 @@ mapacalc <- function(insample, mapafit, fh=0, comb="mean", output="forecast",
 #     ats.fit$components <- components
     
     # ETS based calculation
-    param <- mapafit[[AL,11]]
+    param <- mapafit[[ALi,11]]
     pnames <- names(param)
     if (sum(pnames=="phi")>0) {
       phi <- param[pnames=="phi"]
@@ -549,14 +570,14 @@ mapacalc <- function(insample, mapafit, fh=0, comb="mean", output="forecast",
       phi <- NULL
     }
     
-    AL.fit <- structure(mapafit[AL,1:18],class="ets")
+    AL.fit <- structure(mapafit[ALi,1:18],class="ets")
     ats.fit <- ets(ats, AL.fit, use.initial.values=TRUE)
     
     # Transalte ets states for MAPA
     FCs_temp <- statetranslate(ats.fit,AL,fh,q,ppyA,phi,1)
     
     # Return MAPA components
-    FCs[AL, , ] <- FCs_temp
+    FCs[ALi, , ] <- FCs_temp
     
   }
   
@@ -576,9 +597,9 @@ mapacalc <- function(insample, mapafit, fh=0, comb="mean", output="forecast",
 
   # Construct output
   if (output=="forecast"){
-    forecasts
+    return(forecasts)
   } else {
-    list(forecast=forecasts,components=FCs) 
+    return(list(forecast=forecasts,components=FCs))
   }
   
 }
@@ -640,7 +661,7 @@ statetranslate <- function(fit,AL,fh,q,ppyA,phi,fittype){
   }
 
   # Return output
-  FCs_temp
+  return(FCs_temp)
   
 }
 
@@ -648,26 +669,41 @@ statetranslate <- function(fit,AL,fh,q,ppyA,phi,fittype){
 mapacomb <- function(minimumAL,maximumAL,ppy,FCs,comb,observations){
 # This function combines the translated ets states
   
-  perm_levels <- array(0, maximumAL) # permitted levels due to ETS implementation (observations>=4)
+  # perm_levels is not needed for forecasting. This is already checked in the estimation.
+  # perm_levels <- array(0, maximumAL) # permitted levels due to ETS implementation (observations>=4)
   perm_seas <- array(0, maximumAL)   # permitted seasonalities
   for (AL in minimumAL:maximumAL){
-    if (observations %/% AL >=4){
-      perm_levels[AL] <- 1
-    }
+    # if (observations %/% AL >=4){
+    #   perm_levels[AL] <- 1
+    # }
     if ((ppy %% AL == 0) & (AL<ppy)){
       perm_seas[AL] <- 1
     }
   }
+  # perm_levels <- perm_levels[minimumAL:maximumAL]
+  perm_levels <- rep(1,(maximumAL-minimumAL+1))
+  perm_seas <- perm_seas[minimumAL:maximumAL]
   
   if (dim(FCs)[3] != 1){ # Forecast multiple steps ahead
+    level <- FCs[perm_levels==1, 2, ]
+    trend <- FCs[perm_levels==1, 3, ]
+    season <- FCs[(perm_levels==1 & perm_seas==1), 4, ]
+    # Check that all are arrays
+    if (!is.array(level)){
+      level <- array(level,c(1,length(level)))
+    }
+    if (!is.array(trend)){
+      trend <- array(trend,c(1,length(trend)))
+    }
+    if (!is.array(season)){
+      season <- array(season,c(1,length(season)))
+    }
     if (comb=="mean"){ # alternative averaging operators
-      forecasts <- colSums(rbind(colMeans(FCs[perm_levels==1, 2, ]),
-		    colMeans(FCs[perm_levels==1, 3, ]),colMeans(FCs[(perm_levels==1 & perm_seas==1), 4, ])),
-		    na.rm=TRUE) # MAPA(mean) forecasts
+      forecasts <- colSums(rbind(colMeans(level),colMeans(trend),
+                                 colMeans(season)),na.rm=TRUE) # MAPA(mean) forecasts
     } else {
-      forecasts <- colSums(rbind(colMedians(FCs[perm_levels==1, 2, ]),
-		    colMedians(FCs[perm_levels==1, 3,]),colMedians(FCs[(perm_levels==1 & perm_seas==1), 4, ])),
-		    na.rm=TRUE) # MAPA(median) forecasts
+      forecasts <- colSums(rbind(colMedians(level),colMedians(trend),
+                                 colMedians(season)),na.rm=TRUE) # MAPA(median) forecasts
     }
   } else {
     if (comb=="mean"){ # alternative averaging operators
@@ -690,11 +726,6 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
 # Produce MAPA forecast & components plot 
 # outplot == 0, no plot; == 1 series plot; == 2 component plot
   
-  # Make sure that maximumAL > 1
-  if (maximumAL == 1){
-    maximumAL <- maximumAL + 1
-  }
-  
   if (outplot > 0){
     FClevel <- FCs[perm_levels==1, 2, ]
     FCtrend <- FCs[perm_levels==1, 3, ]
@@ -703,7 +734,17 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
     } else {
       FCseason <- NULL
     }
-    clrs <- rainbow(maximumAL)
+    # Check that all are arrays
+    if (!is.array(FClevel)){
+      FClevel <- array(FClevel,c(length(FClevel)/fh,fh))
+    }
+    if (!is.array(FCtrend)){
+      FCtrend <- array(FCtrend,c(length(FCtrend)/fh,fh))
+    }
+    if (!is.array(FCseason) && !is.null(FCseason)){
+      FCseason <- array(FCseason,c(length(FCseason)/fh,fh))
+    }
+    clrs <- rainbow(length(perm_levels))
     if (outplot == 2){
       if (!is.null(FCseason)){
         layout(matrix(c(1,1,1,2,3,4), 2, 3, byrow = TRUE))
@@ -716,15 +757,17 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
     # Find min max
     ymax <- max(c(max(forecasts),max(insample)))
     ymin <- min(c(min(forecasts),min(insample)))
-    ymax <- ymax + 0.1*(ymax-ymin)
-    ymin <- ymin - 0.1*(ymax-ymin)
+    yminmax <- c(ymin - 0.1*(ymax-ymin),ymax + 0.1*(ymax-ymin))
     # Plot prediction
     plot(1:observations,insample, type="l", col="blue", xlab="", ylab="", 
-		  main="Forecast", xlim=c(1, observations+fh), ylim=c(ymin,ymax))
+		  main="Forecast", xlim=c(1, observations+fh), ylim=yminmax)
     lines((observations):(observations+fh),c(insample[observations],forecasts), col="red")
     if (outplot == 2){
       # Plot Level
-      plot(FClevel[1, ], type="l", col=clrs[1], xlab="", ylab="", main="Level")
+      ymin <- min(FClevel)
+      ymax <- max(FClevel)
+      yminmax <- c(ymin - 0.1*(ymax-ymin),ymax + 0.1*(ymax-ymin))
+      plot(FClevel[1, ], type="l", col=clrs[1], xlab="", ylab="", main="Level", ylim=yminmax)
       for (i in 2:sum(perm_levels)){
         lines(FClevel[i, ], type="l", col=clrs[i])
       }
@@ -734,8 +777,11 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
         lines(colMedians(FClevel), type="l", col="black", lwd=2)
       }
       # Plot trend
+      ymin <- min(FCtrend)
+      ymax <- max(FCtrend)
+      yminmax <- c(ymin - 0.1*(ymax-ymin),ymax + 0.1*(ymax-ymin))
       plot(FCtrend[1, ], type="l", col=clrs[1], xlab="", ylab="", main="Trend", 
-		    ylim=c(min(FCtrend),max(FCtrend)))
+		    ylim=yminmax)
       for (i in 2:sum(perm_levels)){
         lines(FCtrend[i, ], type="l", col=clrs[i])
       }
@@ -746,9 +792,14 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
       }
       # Plot season
       if (!is.null(FCseason)){
-        plot(FCseason[1, ], type="l", col=clrs[1], xlab="", ylab="", main="Season")
-        for (i in 2:sum(perm_levels==1 & perm_seas==1)){
-          lines(FCseason[i, ], type="l", col=clrs[i])
+        ymin <- min(FCseason)
+        ymax <- max(FCseason)
+        yminmax <- c(ymin - 0.1*(ymax-ymin),ymax + 0.1*(ymax-ymin))
+        plot(FCseason[1, ], type="l", col=clrs[1], xlab="", ylab="", main="Season", ylim=yminmax)
+        if (dim(FCseason)[1]>1){
+          for (i in 2:sum(perm_levels==1 & perm_seas==1)){
+            lines(FCseason[i, ], type="l", col=clrs[i])
+          }
         }
         if (comb=="mean"){
           lines(colMeans(FCseason), type="l", col="black", lwd=2)
@@ -761,13 +812,16 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
 }
 
 #-------------------------------------------------
-mapasimple.loop <- function(AL, insample, maximumAL, observations, ppy, display,fh){
+mapasimple.loop <- function(ALi, insample, minimumAL, maximumAL, observations, ppy, display,fh){
   # Internal function for mapasimple estimation and forecast iterations
+  
+  ALvec <- minimumAL:maximumAL
+  AL <- ALvec[ALi]
   
   # Console output
   if (display==1){
     txtc <- paste("Aggregation level: ",AL,"/",maximumAL,
-                  " (",round(100*AL/maximumAL,2),"%)",sep="")
+                  " (",round(100*ALi/(maximumAL-minimumAL+1),2),"%)",sep="")
     cat(txtc)
   }
   
@@ -815,13 +869,16 @@ mapasimple.loop <- function(AL, insample, maximumAL, observations, ppy, display,
 }
 
 #-------------------------------------------------
-mapaest.loop <- function(AL, insample, maximumAL, observations, ppy, display){ 
+mapaest.loop <- function(ALi, insample, minimumAL, maximumAL, observations, ppy, display){ 
   # Internal function for running a single loop in mapaest
+  
+  ALvec <- minimumAL:maximumAL
+  AL <- ALvec[ALi]
   
   # Console output
   if (display==1){
     txtc <- paste("Aggregation level: ",AL,"/",maximumAL,
-                  " (",round(100*AL/maximumAL,2),"%)",sep="")
+                  " (",round(100*ALi/(maximumAL-minimumAL+1),2),"%)",sep="")
     cat(txtc)
   }
   
@@ -845,11 +902,15 @@ mapaest.loop <- function(AL, insample, maximumAL, observations, ppy, display){
     fit <- ets(ats)
     fit$use <- TRUE
   } else {
-    fit <- NULL
-    fit$use <- FALSE
+    fit <- list("loglik"=NULL,"aic"=NULL,"bic"=NULL,"aicc"=NULL,"mse"=NULL,
+                "amse"=NULL,"fit"=NULL,"residuals"=NULL,"fitted"=NULL,
+                "states"=NULL,"par"=NULL,"m"=NULL,"method"=NULL,
+                "components"=NULL,"call"=NULL,"initstate"=NULL,
+                "sigma2"=NULL,"x"=NULL,"use"=FALSE)
   }
   
   fit$AL <- AL
+  fit$original.ppy <- ppy
   
   # Update console display
   if (display==1){
