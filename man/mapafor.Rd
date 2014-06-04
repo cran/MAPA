@@ -6,10 +6,11 @@ The following function produces in- and out-of-sample MAPA forecasts, for multip
  This is the recommended function to use in forecasting with MAPA.
 }
 \usage{
-mapafor(insample, mapafit, fh = -1, ifh = 1, comb = "mean", outplot = 1, hybrid = TRUE)
+mapafor(y, mapafit, fh = -1, ifh = 1, comb = "mean", outplot = 1, hybrid = TRUE,
+        conf.lvl = NULL)
 }
 \arguments{
-  \item{insample}{
+  \item{y}{
     In sample observations of a time series (vector).
 }
   \item{mapafit}{
@@ -30,13 +31,18 @@ mapafor(insample, mapafit, fh = -1, ifh = 1, comb = "mean", outplot = 1, hybrid 
   \item{hybrid}{
     Provide hybrid forecasts, as in Kourentzes et al. paper. If minimumAL > 1 then the minimumAL ETS forecasts are used. Default is TRUE.
 }
+  \item{conf.lvl}{
+    Vector of confidence level for prediction intervals. Values must be (0,1). If conf.lvl == NULL then no intervals are calculated. For example to get the intervals for 80\% and 95\% use conf.lvl=c(0.8,0.95).
+}
 }
 \value{
-\item{out$infor }{In-sample forecasts}
-\item{out$outfor }{Out-of-sample forecasts}
-\item{out$MSE }{In-sample MSE error}
-\item{out$MAE }{In-sample MAE error}
+\item{infor}{In-sample forecasts.}
+\item{outfor}{Out-of-sample forecasts.}
+\item{PI}{Prediction intervals for given confidence levels.}
+\item{MSE}{In-sample MSE error.}
+\item{MAE}{In-sample MAE error.}
 }
+\note{The calculation of the prediction intervals is based on the empirical multiple step ahead MSE. To speed up calculations set conf.lvl=NULL. If very long forecast horizons are requested then once no more t+h MSE can be calculated the following approximation is used: sqrt(MSE_{t+1})*sqrt(h) for the error.}
 \references{
 Kourentzes N., Petropoulos F., Trapero J.R., 2014. Improving forecasting by estimating time 
 series structural components across multiple frequencies, International Journal of Forecasting,

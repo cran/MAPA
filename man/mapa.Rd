@@ -7,13 +7,14 @@
 Uses mapaest and mapafor.}
 
 \usage{
-mapa(insample, ppy, fh = ppy, ifh = 1, minimumAL = 1, maximumAL = ppy, 
-	comb = "mean", paral = 0, display = 0, outplot = 1, hybrid = TRUE, model = "ZZZ")
+mapa(y, ppy, fh = ppy, ifh = 1, minimumAL = 1, maximumAL = ppy, 
+	   comb = "mean", paral = 0, display = 0, outplot = 1, hybrid = TRUE, 
+     model = "ZZZ", conf.lvl = NULL)
 }
 
 \arguments{
-  \item{insample}{
-    In sample observations of a time series (vector). If insample == "paper" then it prints paper reference.
+  \item{y}{
+    In sample observations of a time series (vector). If y == "paper" then it prints paper reference.
 }
   \item{ppy}{
     Periods in a season of the time series at the sampled frequency.
@@ -49,13 +50,18 @@ mapa(insample, ppy, fh = ppy, ifh = 1, minimumAL = 1, maximumAL = ppy,
   \item{model}{
     Allow only that type of ETS at each aggregation level. This follows similar coding to the ets function. The first letter refers to the error type ("A", "M" or "Z"); the second letter refers to the trend type ("N","A","Ad","M","Md" or "Z"); and the third letter refers to the season type ("N","A","M" or "Z"). The letters mean: "N"=none, "A"=additive, "M"=multiplicative and "Z"=automatically selected. A "d" for trend implies damped. By default model="ZZZ". If due to sample limitation ETS cannot be calculated at an aggregation level for the selected model, then no estimation is done for that specific level. 
 }
+  \item{conf.lvl}{
+    Vector of confidence level for prediction intervals. Values must be (0,1). If conf.lvl == NULL then no intervals are calculated. For example to get the intervals for 80\% and 95\% use conf.lvl=c(0.8,0.95).
+}
 }
 \value{
-\item{out$infor }{In-sample forecasts}
-\item{out$outfor }{Out-of-sample forecasts}
-\item{out$MSE }{In-sample MSE error}
-\item{out$MAE }{In-sample MAE error}
+\item{infor}{In-sample forecasts.}
+\item{outfor}{Out-of-sample forecasts.}
+\item{PI}{Prediction intervals for given confidence levels.}
+\item{MSE}{In-sample MSE error.}
+\item{MAE}{In-sample MAE error.}
 }
+\note{The calculation of the prediction intervals is based on the empirical multiple step ahead MSE. To speed up calculations set conf.lvl=NULL. If very long forecast horizons are requested then once no more t+h MSE can be calculated the following approximation is used: sqrt(MSE_{t+1})*sqrt(h) for the error.}
 \references{
 Kourentzes N., Petropoulos F., Trapero J.R., 2014. Improving forecasting by estimating time 
 series structural components across multiple frequencies, International Journal of Forecasting,

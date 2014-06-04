@@ -6,11 +6,11 @@ The following function produces a simple MAPA forecast from a given origin.
 This is meant to be an internal function. Use mapafor instead.
 }
 \usage{
-mapacalc(insample, mapafit, fh = 0, comb = "mean", output = "forecast", outplot = 0, 
-	hybrid = TRUE)
+mapacalc(y, mapafit, fh = 0, comb = "mean", output = "forecast", outplot = 0, 
+	       hybrid = TRUE)
 }
 \arguments{
-  \item{insample}{
+  \item{y}{
     In sample observations of a time series (vector).
 }
   \item{mapafit}{
@@ -24,7 +24,7 @@ mapacalc(insample, mapafit, fh = 0, comb = "mean", output = "forecast", outplot 
 }
   \item{output}{
     Type of output. One of "forecast" or "all". Default is "forecast". If output="all", 
-	both forecasts and components estimates per aggregation level are provided.
+	both forecasts and components estimates per aggregation level are provided. For the components the rainbow colouring scheme is used. Red is aggregation level 1, followed by yellow, green, cyan, blue and magenta for the higher aggregation levels.
 }
   \item{outplot}{
     Provide output plot. 0 = no; 1 = time series and forecast only; 2 = time series, 
@@ -35,8 +35,8 @@ mapacalc(insample, mapafit, fh = 0, comb = "mean", output = "forecast", outplot 
 }
 }
 \value{
-\item{forecasts }{Vector with forecasts}
-\item{components }{Array with MAPA components, if output="all"}
+\item{forecasts}{Vector with forecasts.}
+\item{components}{Array with MAPA components, if output="all".}
 }
 \references{
 Kourentzes N., Petropoulos F., Trapero J.R., 2014. Improving forecasting by estimating time 
