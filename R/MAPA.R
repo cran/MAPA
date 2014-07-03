@@ -1079,6 +1079,23 @@ mapaest.loop <- function(ALi, y, minimumAL, maximumAL, observations,
     
     # Fit ETS
     fit <- ets(ats,model=mapa.model,damped=ets.damped)
+    # If time series is constant then ets does not return the same
+    # structure, correct for that
+    if (length(names(fit)) != 18){
+      fit.temp = fit
+      fit <- list("loglik"=NULL,"aic"=NULL,"bic"=NULL,"aicc"=NULL,"mse"=NULL,
+                  "amse"=NULL,"fit"=NULL,"residuals"=NULL,"fitted"=NULL,
+                  "states"=NULL,"par"=NULL,"m"=NULL,"method"=NULL,
+                  "components"=NULL,"call"=NULL,"initstate"=NULL,
+                  "sigma2"=NULL,"x"=NULL)
+      fit.temp.names <- names(fit.temp)
+      fit.names <- names(fit)
+      for (fi in 1:length(fit.names)){
+        if (sum(fit.temp.names == fit.names[fi])>0){
+          eval(parse(text=paste0("fit$",fit.names[fi]," <- fit.temp$",fit.names[fi])))
+        }
+      }
+    }
     fit$use <- TRUE
   } else {
     fit <- list("loglik"=NULL,"aic"=NULL,"bic"=NULL,"aicc"=NULL,"mse"=NULL,

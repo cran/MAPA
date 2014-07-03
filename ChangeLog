@@ -1,4 +1,10 @@
-Version 1.5 (14 May 2014)
+Version 1.6 (03 July 2014)
+  * Added non-overlapping temporal aggregation function (tsaggr).
+  * Added URL info in description.
+  * Corrected bug in mapaest when actual was constant (ets returned 
+    different structure).
+
+Version 1.5 (04 June 2014)
   * Added empirical prediction intervals for mapa and mapafor.
   * Added return to some functions that were missing it.
   * Plots in mapaest and mapafor re-initialise the plot figure.
@@ -12,17 +18,18 @@ Version 1.5 (14 May 2014)
 Version 1.4 (13 May 2014)
 	* Added model option for mapa, mapasimple and mapaest.
 
-Version 1.3 (28 March 2014)
+Version 1.3 (15 April 2014)
 	* Corrected bug with minimumAL. Now minimumAL can be > 1.
 	* Corrected ylim when outplot=2 for the component plots.
 	* Added links to the help files. 
 	
-Version 1.2
+Version 1.2 (24 March 2014)
 	* Stopped using forecast:::pegelsresid.C. New forecast package (v5.3) 
 	  allows keeping initial values constant.
 
-Version 1.1
+Version 1.1 (Not in CRAN)
 	* Switched from doSNOW to parallel.
+  * Introduced NAMESPACE.
 	
-Version 1.0
-	* Introduced NAMESPACE.
+Version 1.0 (Not in CRAN)
+  * Initial version.

@@ -1,7 +1,8 @@
-ff257a083f15e305b938147de5d4f9c6 *ChangeLog
-ff06d2dcb645d140e549954ab141a77c *DESCRIPTION
-3fecc833608f69e22f534b4469202b92 *NAMESPACE
-44122810107926c0a392a6db6282c0bb *R/MAPA.R
+9df7c614e00e76baf7336f1dc026f3e5 *ChangeLog
+18d7a8b6fea13134a2bbb30bbb39308f *DESCRIPTION
+712da017b97ab02869b2e8ade3066142 *NAMESPACE
+53910ba839fca0f06c3f40f043c7a773 *R/MAPA.R
+bb9b6e81c6f8507a6cb14ed674281172 *R/tsaggr.R
 48f4de4b935a51d3ba6e02d3fcaf9414 *data/admissions.rda
 48539093772a85c9affe679815034abd *man/admissions.Rd
 f9ff7025f9f63763da2e88df01502335 *man/mapa.Rd
@@ -9,3 +10,4 @@ cbffd3217d9ce84bff1ba970b0c6800a *man/mapacalc.Rd
 86a37abf3a223a85e61565d0a7a8c271 *man/mapaest.Rd
 19ab0e74700818e45f6bdd9bfd7dde7c *man/mapafor.Rd
 36277beaa5aed424d0fcf2a75f83c76c *man/mapasimple.Rd
+e5788e4ccbf9743a5791373e98f27cb1 *man/tsaggr.Rd
