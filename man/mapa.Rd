@@ -27,7 +27,7 @@ mapa(y, ppy, fh = ppy, ifh = 1, minimumAL = 1, maximumAL = ppy,
     Lower aggregation level to use. Default = 1.
 }
   \item{minimumAL}{
-    Lower aggregation level to use. Default = 1.
+    Lowest aggregation level to use. Default = 1.
 }
   \item{maximumAL}{
     Highest aggregation level to use. Default = ppy, maximumAL>1.

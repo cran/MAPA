@@ -7,8 +7,8 @@
 # Nikolaos Kourentzes & Fotios Petropoulos (2014)
 
 library(forecast, quietly=TRUE)   # ETS method
-library(miscTools, quietly=TRUE)  # Needed for medians by columns
 library(parallel, quietly=TRUE)   # Needed for parallel
+# library(miscTools, quietly=TRUE)  # Needed for medians by columns - Replaced colMedians(X) by apply(X,2,"median")
 
 #-------------------------------------------------
 mapa <- function(y, ppy=NULL, fh=ppy, ifh=1, minimumAL=1, maximumAL=ppy, 
@@ -26,7 +26,7 @@ mapa <- function(y, ppy=NULL, fh=ppy, ifh=1, minimumAL=1, maximumAL=ppy,
 #                 unless overriden. 
 #   fh          = Forecast horizon. Default = ppy
 #   ifh         = In-sample forecast horizon. Default = 1
-#   minimumAL   = Lower aggregation level to use. Default = 1
+#   minimumAL   = Lowest aggregation level to use. Default = 1
 #   maximumAL   = Highest aggregation level to use. Default = ppy, maximumAL>1
 #   comb        = Combination operator. One of "mean" or "median". Default is "mean"
 #   paral       = Use parallel processing. 0 = no; 1 = yes (requires initialised cluster); 
@@ -105,7 +105,7 @@ mapasimple <- function(y, ppy=NULL, fh=ppy, minimumAL=1, maximumAL=ppy, comb="me
 #                 If y is a ts object then this is taken from its frequency,
 #                 unless overriden. 
 #   fh          = Forecast horizon. Default = ppy
-#   minimumAL   = Lower aggregation level to use. Default = 1, maximumAL>1
+#   minimumAL   = Lowest aggregation level to use. Default = 1, maximumAL>1
 #   maximumAL   = Highest aggregation level to use. Default = ppy
 #   comb        = Combination operator. One of "mean" or "median". Default is "mean"
 #   output      = Type of output. One of "forecast" or "all". Default is "forecast"
@@ -431,7 +431,7 @@ mapaest <- function(y, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=0, display=0,
 #   ppy         = Periods in a season of the time series at the sampled frequency.
 #                 If y is a ts object then this is taken from its frequency,
 #                 unless overriden. 
-#   minimumAL   = Lower aggregation level to use. Default = 1, maximumAL>1
+#   minimumAL   = Lowest aggregation level to use. Default = 1, maximumAL>1
 #   maximumAL   = Highest aggregation level to use. Default = ppy
 #   paral       = Use parallel processing. 0 = no; 1 = yes (requires initialised cluster); 
 #                 2 = yes and initialise cluster. Default is 0.
@@ -763,7 +763,7 @@ statetranslate <- function(fit,AL,fh,q,ppyA,phi,fittype){
     FCs_temp[4, ] <- as.numeric(rep(rep(rev(fit$states[q+1,(2+b):(ppyA+1+b)]), fhA), each=AL))[1:fh]
   } else { # multiplicative seasonality
     FCs_temp[4, ] <- as.numeric((rep(rep(rev(fit$states[q+1,(2+b):(ppyA+1+b)]), fhA),
-		each=AL)[1:fh] - 1)) * (FCs_temp[2, ] + FCs_temp[3, ])
+		                 each=AL)[1:fh] - 1)) * (FCs_temp[2, ] + FCs_temp[3, ])
   }
   
   # fittype identifies if information is comming from ets or mapafit
@@ -818,8 +818,10 @@ mapacomb <- function(minimumAL,maximumAL,ppy,FCs,comb,observations){
       forecasts <- colSums(rbind(colMeans(level),colMeans(trend),
                                  colMeans(season)),na.rm=TRUE) # MAPA(mean) forecasts
     } else {
-      forecasts <- colSums(rbind(colMedians(level),colMedians(trend),
-                                 colMedians(season)),na.rm=TRUE) # MAPA(median) forecasts
+      # forecasts <- colSums(rbind(colMedians(level),colMedians(trend),
+      #                            colMedians(season)),na.rm=TRUE) # MAPA(median) forecasts
+      forecasts <- colSums(rbind(apply(level,2,"median"),apply(trend,2,"median"),
+                                 apply(season,2,"median")),na.rm=TRUE) # MAPA(median) forecasts
     }
   } else {
     if (comb=="mean"){ # alternative averaging operators
@@ -840,8 +842,8 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
 	                   y,forecasts,fh,comb)
 {
 # Produce MAPA forecast & components plot 
-# outplot == 0, no plot; == 1 series plot; == 2 component plot
-  
+# outplot == 0, no plot; == 1 series plot; == 2 component plot  
+
   if (outplot > 0){
     FClevel <- FCs[perm_levels==1, 2, ]
     FCtrend <- FCs[perm_levels==1, 3, ]
@@ -890,7 +892,8 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
       if (comb=="mean"){
         lines(colMeans(FClevel), type="l", col="black", lwd=2)
       } else {
-        lines(colMedians(FClevel), type="l", col="black", lwd=2)
+        # lines(colMedians(FClevel), type="l", col="black", lwd=2)
+        lines(apply(FClevel,2,"median"), type="l", col="black", lwd=2)
       }
       # Plot trend
       ymin <- min(FCtrend)
@@ -904,7 +907,8 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
       if (comb=="mean"){
         lines(colMeans(FCtrend), type="l", col="black", lwd=2)
       } else {
-        lines(colMedians(FCtrend), type="l", col="black", lwd=2)
+        # lines(colMedians(FCtrend), type="l", col="black", lwd=2)
+        lines(apply(FCtrend,2,"median"), type="l", col="black", lwd=2)
       }
       # Plot season
       if (!is.null(FCseason)){
@@ -920,7 +924,8 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
         if (comb=="mean"){
           lines(colMeans(FCseason), type="l", col="black", lwd=2)
         } else {
-          lines(colMedians(FCseason), type="l", col="black", lwd=2)
+          # lines(colMedians(FCseason), type="l", col="black", lwd=2)
+          lines(apply(FCseason,2,"median"), type="l", col="black", lwd=2)
         }
       }
     }
@@ -1118,5 +1123,82 @@ mapaest.loop <- function(ALi, y, minimumAL, maximumAL, observations,
   
   # Return loop result
   return(rbind(fit))
+  
+}
+
+#-------------------------------------------------
+plotmapa <- function(mapafit){
+# Produce estimated MAPA fit plot
+# 
+# Inputs:
+#   mapafit     = Fitted MAPA model (from mapaest)
+
+
+  # Get settings from mapafit
+  ALs <- as.numeric(mapafit[mapafit[,19]==TRUE, 20])
+  minimumAL <- min(ALs)
+  maximumAL <- max(ALs)
+  ppy <- as.numeric(mapafit[1,21])
+  
+  # Plot model selection summary
+  ALplot <- 1:(maximumAL-minimumAL+1)
+  ALplot <- ALplot[unlist(mapafit[,19])==TRUE]
+
+  layout(matrix(1, 1, 1, byrow = TRUE))
+  comps <- array(0,c(max(ALplot),5))
+  for (AL in 1:max(ALplot)){
+    components <- mapafit[[AL, 14]]
+    # Error term
+    if (components[1]=="A"){
+      comps[AL,1] <- 1
+    } else {
+      comps[AL,1] <- 2
+    }
+    # Trend term
+    if (components[2]=="A"){
+      comps[AL,2] <- 1
+    } else {if (components[2]=="M"){
+      comps[AL,2] <- 2
+    } else
+      comps[AL,2] <- 0
+    }
+    # Season term
+    if (components[3]=="A"){
+      comps[AL,3] <- 1
+    } else {if (components[3]=="M"){
+      comps[AL,3] <- 2
+    } else
+      comps[AL,3] <- 0
+    }
+    # Damped tem
+    if (components[4]==TRUE){
+      comps[AL,4] <- 1
+    }
+    comps[AL,5] <- mapafit[[AL,20]]
+  }
+  comps[, 2] <- comps[, 2] + 0.5*comps[, 4]
+  image(min(comps[,5]):max(comps[,5]), 1:3, comps[,1:3], axes=FALSE, col=rev(heat.colors(5)), 
+        ylab="Components", xlab="Aggregation Level", main="ETS components")
+  axis(2, at=1:3, labels=list("Error","Trend","Season"))
+  axis(1, at=min(comps[,5]):max(comps[,5]))
+  
+  for (i in 1:4){
+    for (AL in 1:max(ALplot)){
+      if (i==1){
+        lines(c(AL-0.5+minimumAL-1,AL-0.5+minimumAL-1),c(0,4),col="black")
+      }
+      if (i<4 & AL<=max(comps[,5])){
+        if (i==2 & comps[AL,4]==TRUE){
+          damp <- "d"
+        } else {
+          damp <- NULL
+        }
+        text(AL+minimumAL-1,i,paste(mapafit[[AL,14]][i],damp,sep=""))
+      }
+    }
+    lines(c(min(comps[,5])-0.5,max(comps[,5])+0.5),c(i-0.5,i-0.5),col="black")
+  }
+  lines(c(as.numeric(mapafit[max(ALplot),20])+0.5,
+          as.numeric(mapafit[max(ALplot),20])+0.5),c(0,4),col="black")
   
 }

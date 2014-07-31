@@ -23,7 +23,7 @@ mapasimple(y, ppy, fh = ppy, minimumAL = 1, maximumAL = ppy, comb = "mean",
     Forecast horizon. Default = ppy.
 }
   \item{minimumAL}{
-    Lower aggregation level to use. Default = 1, maximumAL>1.
+    Lowest aggregation level to use. Default = 1, maximumAL>1.
 }
   \item{maximumAL}{
     Highest aggregation level to use. Default = ppy.

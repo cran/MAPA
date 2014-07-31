@@ -17,7 +17,7 @@ mapaest(y, ppy, minimumAL = 1, maximumAL = ppy, paral = 0,
     If insample is a ts object then this is taken from its frequency, unless overriden.
 }
   \item{minimumAL}{
-    Lower aggregation level to use. Default = 1, maximumAL>1.
+    Lowest aggregation level to use. Default = 1, maximumAL>1.
 }
   \item{maximumAL}{
     Highest aggregation level to use. Default = ppy.

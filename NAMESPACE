@@ -1,4 +1,4 @@
 
-import(forecast,parallel,miscTools)
+import(forecast,parallel)
 
-export(mapa,mapasimple,mapaest,mapacalc,mapafor,tsaggr)
+export(mapa,mapasimple,mapaest,mapacalc,mapafor,tsaggr,plotmapa)
