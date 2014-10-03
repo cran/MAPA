@@ -208,12 +208,17 @@ mapasimple <- function(y, ppy=NULL, fh=ppy, minimumAL=1, maximumAL=ppy, comb="me
   
   # Check whether all aggregation levels were calculated for given model
   # due to sample size
+  names.r <- rownames(FCs)
+  names.c <- colnames(FCs)
   AL.idx <- is.na(FCs[,1,1])
   maximumAL <- maximumAL - sum(AL.idx)
   FCs <- FCs[!AL.idx, , ]
-  # With fh = 1 the line above removes the third dimension. Add it again
+  names.r <- names.r[!AL.idx]
+  # Check if dimensionality of FCs remains
   if (length(dim(FCs))==2){
-    FCs <- array(FCs,c(maximumAL,4,fh),dimnames=list(rownames(FCs),colnames(FCs),paste("t+",1:fh,sep="")))
+    # With fh = 1 the line above removes the third dimension. Add it again
+    # Another case is that there is only a single aggregation level left
+    FCs <- array(FCs,c(maximumAL,4,fh),dimnames=list(names.r,names.c,paste("t+",1:fh,sep="")))
   }
   
   # MAPA combination
@@ -287,9 +292,11 @@ mapafor <- function(y, mapafit, fh=-1, ifh=1, comb="mean", outplot=1, hybrid=TRU
   }
   
   # In-sample MAPA
-  if (ifh.c>0){
+  i.start <- max(ppy,maximumAL)
+  if (ifh.c>0 && i.start<observations){   # Do not produce in-sample forecasts if there is 
+                                          # not enough sample
     infor <- array(NA,c(ifh.c,observations),dimnames=list(paste("t+",1:ifh.c,sep="")))
-    for (i in max(ppy,maximumAL):(observations-1)){
+    for (i in i.start:(observations-1)){
       inobs <- as.matrix(y[1:i])
       infor[, i+1] <- mapacalc(inobs, mapafit, fh=ifh.c, comb, output="forecast", 
                                outplot=0, hybrid) 
@@ -301,6 +308,9 @@ mapafor <- function(y, mapafit, fh=-1, ifh=1, comb="mean", outplot=1, hybrid=TRU
     }    
   } else {
     infor <- NULL
+    ifh.c <- 0        # Override in-sample output if no forecasts are calculated
+    conf.lvl <- NULL  # Confidence intervals cannot be calculated
+    
   }
   
   # Out-of-sample MAPA
@@ -354,7 +364,7 @@ mapafor <- function(y, mapafit, fh=-1, ifh=1, comb="mean", outplot=1, hybrid=TRU
   }
   
   # Crop insample forecasts and erros to ifh
-  if (ifh > 0){
+  if (ifh.c > 0){
     infor <- array(infor[1:ifh,],c(ifh,observations),dimnames=list(paste("t+",1:ifh,sep="")))
     MSE <- MSE[1:ifh,]
     MAE <- MAE[1:ifh,]
@@ -387,7 +397,7 @@ mapafor <- function(y, mapafit, fh=-1, ifh=1, comb="mean", outplot=1, hybrid=TRU
     plot(1:observations,y,type="l",col="blue", xlab="", ylab="", main="Forecast", 
 		xlim <- c(1, observations+fh), ylim=c(ymin,ymax))
     # In-sample
-    if (ifh>0){
+    if (ifh.c>0){
       if (ifh==1){
         lines(infor[1,],col="red")
       } else {
@@ -407,7 +417,7 @@ mapafor <- function(y, mapafit, fh=-1, ifh=1, comb="mean", outplot=1, hybrid=TRU
       }
     }
     # Out-of-sample
-    if (ifh == 0){
+    if (ifh == 0 || ifh.c == 0){
       lines(observations:(fh+observations),c(y[observations],outfor),col="red")
     } else if (ifh == 1){
       lines(observations:(fh+observations),c(infor[1,observations],outfor),col="red")
@@ -542,7 +552,7 @@ mapaest <- function(y, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=0, display=0,
       comps[AL,5] <- mapafit[[AL,20]]
     }
     comps[, 2] <- comps[, 2] + 0.5*comps[, 4]
-    image(min(comps[,5]):max(comps[,5]), 1:3, comps[,1:3], axes=FALSE, col=rev(heat.colors(5)), 
+    image(min(comps[,5]):max(comps[,5]), 1:3, matrix(comps[,1:3],ncol=3), axes=FALSE, col=rev(heat.colors(5)), 
 		  ylab="Components", xlab="Aggregation Level", main="ETS components")
     axis(2, at=1:3, labels=list("Error","Trend","Season"))
     axis(1, at=min(comps[,5]):max(comps[,5]))
@@ -886,8 +896,10 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
       ymax <- max(FClevel)
       yminmax <- c(ymin - 0.1*(ymax-ymin),ymax + 0.1*(ymax-ymin))
       plot(FClevel[1, ], type="l", col=clrs[1], xlab="", ylab="", main="Level", ylim=yminmax)
-      for (i in 2:sum(perm_levels)){
-        lines(FClevel[i, ], type="l", col=clrs[i])
+      if (sum(perm_levels)>1){
+        for (i in 2:sum(perm_levels)){
+          lines(FClevel[i, ], type="l", col=clrs[i])
+        }
       }
       if (comb=="mean"){
         lines(colMeans(FClevel), type="l", col="black", lwd=2)
@@ -901,8 +913,10 @@ mapaplot <- function(outplot,FCs,maximumAL,perm_levels,perm_seas,observations,
       yminmax <- c(ymin - 0.1*(ymax-ymin),ymax + 0.1*(ymax-ymin))
       plot(FCtrend[1, ], type="l", col=clrs[1], xlab="", ylab="", main="Trend", 
 		    ylim=yminmax)
-      for (i in 2:sum(perm_levels)){
-        lines(FCtrend[i, ], type="l", col=clrs[i])
+      if (sum(perm_levels)>1){
+        for (i in 2:sum(perm_levels)){
+          lines(FCtrend[i, ], type="l", col=clrs[i])
+        }
       }
       if (comb=="mean"){
         lines(colMeans(FCtrend), type="l", col="black", lwd=2)
@@ -1177,7 +1191,7 @@ plotmapa <- function(mapafit){
     comps[AL,5] <- mapafit[[AL,20]]
   }
   comps[, 2] <- comps[, 2] + 0.5*comps[, 4]
-  image(min(comps[,5]):max(comps[,5]), 1:3, comps[,1:3], axes=FALSE, col=rev(heat.colors(5)), 
+  image(min(comps[,5]):max(comps[,5]), 1:3, matrix(comps[,1:3],ncol=3), axes=FALSE, col=rev(heat.colors(5)), 
         ylab="Components", xlab="Aggregation Level", main="ETS components")
   axis(2, at=1:3, labels=list("Error","Trend","Season"))
   axis(1, at=min(comps[,5]):max(comps[,5]))

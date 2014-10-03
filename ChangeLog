@@ -1,3 +1,6 @@
+Version 1.8 (03 October 2014)
+  * Corrected bug for very short time series.
+
 Version 1.7 (31 July 2014)
   * Added plotmapa function to visualise fitted MAPA without need to re-estimate
   * Removed dependence on 'miscTools' package for calculation of medians by columns
