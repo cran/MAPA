@@ -1,3 +1,7 @@
+Version 1.9 (21 November 2014)
+  * Corrected bug in mapafor when ifh == 0 and prediction intervals were requested.
+  * Added more detailed package description.
+
 Version 1.8 (03 October 2014)
   * Corrected bug for very short time series.
 

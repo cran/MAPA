@@ -1,4 +1,4 @@
-# Based on paper:
+# Reference:
 # Kourentzes N., Petropoulos F. and Trapero J.R. (2014) 
 # Improving forecasting by estimating time series structural 
 # components across multiple frequencies. 
@@ -364,7 +364,7 @@ mapafor <- function(y, mapafit, fh=-1, ifh=1, comb="mean", outplot=1, hybrid=TRU
   }
   
   # Crop insample forecasts and erros to ifh
-  if (ifh.c > 0){
+  if (ifh.c > 0 && ifh > 0){
     infor <- array(infor[1:ifh,],c(ifh,observations),dimnames=list(paste("t+",1:ifh,sep="")))
     MSE <- MSE[1:ifh,]
     MAE <- MAE[1:ifh,]
