@@ -1,4 +1,7 @@
 
 import(forecast,parallel)
+importFrom("grDevices", "col2rgb", "heat.colors", "rainbow", "rgb")
+importFrom("graphics", "axis", "image", "layout", "legend", "lines", "plot", "points", "polygon", "text")
+importFrom("stats", "frequency", "median", "qnorm", "ts")
 
 export(mapa,mapasimple,mapaest,mapacalc,mapafor,tsaggr,plotmapa)

@@ -1092,6 +1092,8 @@ mapaest.loop <- function(ALi, y, minimumAL, maximumAL, observations,
     # Check if seasonality exists and select appropriate model
     if ((model[mn] == "A" | model[mn] == "M") && ppyA == 1){
       mapa.model <- paste(substring(ets.model,1,2),"N",sep="")
+    } else if (ppyA == 2 && q <= 3*ppyA){   # This is added to deal with the bug in the fourier function that is used for the initialisation of ets
+      mapa.model <- paste(substring(ets.model,1,2),"N",sep="")
     } else {
       mapa.model <- ets.model
     }
