@@ -1,3 +1,9 @@
+# CHANGES IN MAPA VERSION 2.0.2 (06 Jun 2017)
+- Fixed bug in mapacalc when mapaest uses pr.comp=-1.
+- Fixed bug in plotting th output of mapaest.
+- Minor changes in input argument checking. 
+- Added CITATION file.
+
 # CHANGES IN MAPA VERSION 2.0.1 (01 Nov 2016)
 
 ## NEW FEATURES

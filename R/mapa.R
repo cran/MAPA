@@ -67,7 +67,7 @@ mapa <- function(y, ppy=NULL, fh=ppy, ifh=1, minimumAL=1, maximumAL=ppy,
 #   out$MAE     = In-sample MAE error
   
   # Defaults
-  comb <- comb[1]
+  comb <- match.arg(comb,c("mean","median","w.mean","w.median","wght"))
   paral <- paral[1]
   display <- display[1]
   outplot <- outplot[1]
@@ -138,7 +138,7 @@ mapacomb <- function(minimumAL,maximumAL,ppy,FCs,comb){
       season <- array(season,c(1,length(season)))
     }
     if (!is.array(xreg)){
-      trend <- array(xreg,c(1,length(xreg)))
+      xreg <- array(xreg,c(1,length(xreg)))
     }
     if (comb=="mean"){ # alternative averaging operators
       forecasts <- colSums(rbind(colMeans(level),colMeans(trend),
@@ -422,7 +422,7 @@ mapasimple <- function(y, ppy=NULL, fh=ppy, minimumAL=1, maximumAL=ppy, comb=c("
   }  
   
   # Defaults
-  comb <- comb[1]
+  comb <- match.arg(comb,c("mean","median","w.mean","w.median","wght"))
   paral <- paral[1]
   display <- display[1]
   outplot <- outplot[1]
