@@ -1,3 +1,12 @@
+# CHANGES IN MAPA VERSION 2.0.4 (05 JAN 2018)
+- Updated statetranslate() to handle changes in smooth package (state name "seasonality" changed to "seasonal")
+- By default all functions does not produce plots anymore.
+- Default combination operator changed to w.mean.
+
+# CHANGES IN MAPA VERSION 2.0.3 (04 Jul 2017)
+- Minor improvement in plotting mapa.fit class objects. Now levels for which no seasonality is estimated are in grey.
+- Accomondate changes in smooth::es output.
+
 # CHANGES IN MAPA VERSION 2.0.2 (06 Jun 2017)
 - Fixed bug in mapacalc when mapaest uses pr.comp=-1.
 - Fixed bug in plotting th output of mapaest.
