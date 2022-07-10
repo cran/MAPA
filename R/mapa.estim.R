@@ -54,7 +54,7 @@ mapaest <- function(y, ppy=NULL, minimumAL=1, maximumAL=ppy, paral=c(0,1,2), dis
   
   # Get ppy and maximumAL
   if (is.null(ppy)){
-    if (class(y)=="ts"){
+    if (isa(y,"ts")){
       ppy <- frequency(y)
       if (is.null(maximumAL)){maximumAL <- ppy}
     } else {
