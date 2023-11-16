@@ -1,4 +1,7 @@
-# CHANGES IN MAPA VERSION 2.0.5 )10 JUL 2021)
+# CHANGES IN MAPA VERSION 2.0.6 (12 NOV 2023)
+- Fixed smooth related dependencies.
+
+# CHANGES IN MAPA VERSION 2.0.5 (10 JUL 2021)
 - Updated class ckecks.
 - Updated links in help files.
 
