@@ -6,7 +6,7 @@ importFrom("stats", "frequency", "median", "qnorm", "ts", "prcomp", "sd")
 importFrom("utils", "tail")
 importFrom("smooth", "es", "modelType")
 
-export(mapa,mapasimple,mapaest,mapacalc,mapafor,tsaggr,plotmapa)
+export(mapa,mapasimple,mapaest,mapacalc,mapafor,tsaggr)
 
 S3method(plot,mapa.fit)
 S3method(print,mapa.fit)

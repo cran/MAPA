@@ -1,3 +1,6 @@
+# CHANGES IN MAPA VERSION 2.0.7 (04 MAR 2024)
+- Removed deprecated plotmapa function. Use plot instead. 
+
 # CHANGES IN MAPA VERSION 2.0.6 (12 NOV 2023)
 - Fixed smooth related dependencies.
 

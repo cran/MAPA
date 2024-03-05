@@ -1,9 +1,9 @@
 9d24390a00408dc34e350e9ce7c3f67a *ChangeLog
-2946ea1680de536c5ddb379b7d0a4004 *DESCRIPTION
-2981dba69d223e343d7010d53c620c06 *NAMESPACE
-8912a7196de40dbb0a9f5a4e936218a3 *NEWS.md
+1e6640fcc7ed37f96ac37ae86168880e *DESCRIPTION
+850299660a0c4d0b10b4b8f88dea3926 *NAMESPACE
+636b2c2afe629817723019affa4a559d *NEWS.md
 368f28cbe688134fdcad36f30d15b13c *R/MAPA.R
-4d034f23dec68d1e4660d9457acc2f19 *R/mapa.estim.R
+2ec2e4b5c2a7a94cb7b654175da05e1d *R/mapa.estim.R
 532b7bc33cf9e1548f405b3feec7dc66 *R/mapa.forecast.R
 db78d7e32e13c3c22d11ec9fe8c10462 *R/tsaggr.R
 098a1643dff32405a0569c078f5b8fd0 *README.md
@@ -16,5 +16,4 @@ ee47fc9618bf784ae81e6dfcff17171c *man/mapacalc.Rd
 d982ed2fe46cb835deb8f1da988d9d00 *man/mapafor.Rd
 d93a01df09367b681fd7a1133138d7ca *man/mapasimple.Rd
 c6afedc1bf4727e79a5447ae895dbc1c *man/plot.mapa.fit.Rd
-5f16ff03b261d00500e263b5f3796f32 *man/plotmapa.Rd
 5a0304a6c691ea416dffeeabd27022fb *man/tsaggr.Rd

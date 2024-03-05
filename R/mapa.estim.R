@@ -366,13 +366,13 @@ mapaest.loop <- function(ALi, y, minimumAL, maximumAL, observations,
   
 }
 
-#-------------------------------------------------
-plotmapa <- function(mapafit){
-  
-  warning("'plotmapa' is deprecated.\n Use plot() instead.")
-  plot.mapa.fit(mapafit)
-  
-}
+# #-------------------------------------------------
+# plotmapa <- function(mapafit){
+#   
+#   warning("'plotmapa' is deprecated.\n Use plot() instead.")
+#   plot.mapa.fit(mapafit)
+#   
+# }
 
 #-------------------------------------------------
 summary.mapa.fit <- function(object,...){
